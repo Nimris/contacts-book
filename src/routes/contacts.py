@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
@@ -16,12 +16,17 @@ async def get_contacts(skip:int = 0, limit:int = 50, db: Session = Depends(get_d
     return contacts
 
 
-@router.get("/{contact_id}", response_model=ContactResponse)
-async def get_contact(contact_id: int, db: Session = Depends(get_db)):
-    contact = await repository_contacts.get_contact(contact_id, db)
+@router.get("/contacts", response_model=List[ContactResponse])
+async def get_contact(db: Session = Depends(get_db), contact_id: Optional[int] = None, name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None):
+    contact = await repository_contacts.get_contact(db, contact_id, name, surname, email)
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
     return contact
+# async def get_contact(contact_id: int, db: Session = Depends(get_db)):
+#     contact = await repository_contacts.get_contact(contact_id, db)
+#     if contact is None:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+#     return contact
 
 
 @router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -10,8 +10,18 @@ async def get_contacts(skip: int, limit: int, db: Session) -> List[Contact]:
     return db.query(Contact).offset(skip).limit(limit).all()
 
 
-async def get_contact(contact_id: int, db: Session) -> Contact:
-    return db.query(Contact).filter(Contact.id == contact_id).first()
+async def get_contact(db: Session, contact_id: Optional[int],  name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None) -> Contact | None:
+    if contact_id:
+        return db.query(Contact).filter(Contact.id == contact_id).all()
+    if name:
+        return db.query(Contact).filter(Contact.name == name).all()
+    if surname:
+        return db.query(Contact).filter(Contact.surname == surname).all()
+    if email:
+        return db.query(Contact).filter(Contact.email == email).all()
+    
+# async def get_contact(contact_id: int, db: Session) -> Contact:
+#     return db.query(Contact).filter(Contact.id == contact_id).first()
 
 
 async def create_contact(contact: ContactCreate, db: Session) -> Contact:
