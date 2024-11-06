@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from src.database.models import Contact
-from src.schemas import ContactCreate, ContactResponse, ContactUpdate
+from src.schemas import ContactCreate, ContactUpdate
 
 from datetime import date, timedelta
 
