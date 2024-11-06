@@ -10,13 +10,13 @@ from src.repository import contacts as repository_contacts
 router = APIRouter(prefix='/contacts')
 
 
-@router.get("/", response_model=List[ContactResponse])
+@router.get("/all", response_model=List[ContactResponse])
 async def get_contacts(skip:int = 0, limit:int = 50, db: Session = Depends(get_db)):
     contacts = await repository_contacts.get_contacts(skip, limit, db)
     return contacts
 
 
-@router.get("/contacts", response_model=List[ContactResponse])
+@router.get("/", response_model=List[ContactResponse])
 async def get_contact(db: Session = Depends(get_db), contact_id: Optional[int] = None, name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None):
     contact = await repository_contacts.get_contact(db, contact_id, name, surname, email)
     if contact is None:
@@ -48,3 +48,9 @@ async def delete_contact(contact_id: int, db: Session = Depends(get_db)):
     if contact is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
     return contact
+
+
+@router.get("/upcoming_birthdays", response_model=List[ContactResponse])
+async def get_upcoming_birthdays(db: Session = Depends(get_db)):
+    contacts = await repository_contacts.get_upcoming_birthdays(db)
+    return contacts

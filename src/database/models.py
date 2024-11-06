@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, func, Table
+from sqlalchemy import Column, Date, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
@@ -13,5 +13,5 @@ class Contact(Base):
     surname = Column(String(50))
     email = Column(String(50), unique=True, nullable=False)
     phone = Column(String(50), unique=True, nullable=False)
-    birthday = Column(DateTime)
+    birthday = Column(Date)
     

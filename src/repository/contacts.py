@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session
 from src.database.models import Contact
 from src.schemas import ContactCreate, ContactResponse, ContactUpdate
 
+from datetime import date, timedelta
+
+from sqlalchemy import and_, extract, or_
+
 
 async def get_contacts(skip: int, limit: int, db: Session) -> List[Contact]:
     return db.query(Contact).offset(skip).limit(limit).all()
@@ -52,3 +56,23 @@ async def delete_contact(contact_id: int, db: Session) -> Contact | None:
         db.commit()
     return db_contact
         
+        
+async def get_upcoming_birthdays(db: Session) -> List[Contact]:
+    today = date.today()
+    end_date = today + timedelta(days=7)
+
+    contacts = db.query(Contact).filter(
+        or_(
+            and_(
+                extract('month', Contact.birthday) == today.month,
+                extract('day', Contact.birthday) >= today.day,
+                extract('day', Contact.birthday) <= end_date.day
+            ),
+            and_(
+                extract('month', Contact.birthday) == end_date.month,
+                extract('day', Contact.birthday) <= end_date.day
+            )
+        )
+    ).all()
+
+    return contacts
