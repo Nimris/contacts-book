@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field
+from pydantic.class_validators import ConfigDict
 
 
 class ContactBase(BaseModel):
@@ -21,8 +22,6 @@ class ContactCreate(ContactBase):
 
 class ContactResponse(ContactBase):
     id: int
-    
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
     
     
