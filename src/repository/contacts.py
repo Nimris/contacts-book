@@ -1,67 +1,67 @@
 from typing import List, Optional
-
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import and_, extract, or_
+from datetime import date, timedelta
 
 from src.database.models import Contact
 from src.schemas import ContactCreate, ContactUpdate
 
-from datetime import date, timedelta
+async def get_contacts(skip: int, limit: int, db: AsyncSession) -> List[Contact]:
+    result = await db.execute(select(Contact).offset(skip).limit(limit))
+    return result.scalars().all()
 
-from sqlalchemy import and_, extract, or_
-
-
-async def get_contacts(skip: int, limit: int, db: Session) -> List[Contact]:
-    return db.query(Contact).offset(skip).limit(limit).all()
-
-
-async def get_contact(db: Session, contact_id: Optional[int],  name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None) -> Contact | None:
+async def get_contact(db: AsyncSession, contact_id: Optional[int] = None, name: Optional[str] = None, surname: Optional[str] = None, email: Optional[str] = None) -> List[Contact]:
     if contact_id:
-        return db.query(Contact).filter(Contact.id == contact_id).all()
+        result = await db.execute(select(Contact).filter(Contact.id == contact_id))
+        return result.scalars().all()
     if name:
-        return db.query(Contact).filter(Contact.name == name).all()
+        result = await db.execute(select(Contact).filter(Contact.name == name))
+        return result.scalars().all()
     if surname:
-        return db.query(Contact).filter(Contact.surname == surname).all()
+        result = await db.execute(select(Contact).filter(Contact.surname == surname))
+        return result.scalars().all()
     if email:
-        return db.query(Contact).filter(Contact.email == email).all()
-    
-# async def get_contact(contact_id: int, db: Session) -> Contact:
-#     return db.query(Contact).filter(Contact.id == contact_id).first()
+        result = await db.execute(select(Contact).filter(Contact.email == email))
+        return result.scalars().all()
+    return []
 
-
-async def create_contact(contact: ContactCreate, db: Session) -> Contact:
-    new_contact = Contact(name=contact.name, surname=contact.surname, email=contact.email, phone=contact.phone, birthday=contact.birthday)
+async def create_contact(contact: ContactCreate, db: AsyncSession) -> Contact:
+    new_contact = Contact(
+        name=contact.name, surname=contact.surname, email=contact.email,
+        phone=contact.phone, birthday=contact.birthday
+    )
     db.add(new_contact)
-    db.commit()
-    db.refresh(new_contact)
+    await db.commit()
+    await db.refresh(new_contact)
     return new_contact
 
-
-async def update_contact(contact_id: int, contact: ContactUpdate, db: Session) -> Contact | None:
-    db_contact = db.query(Contact).filter(Contact.id == contact_id).first()
+async def update_contact(contact_id: int, contact: ContactUpdate, db: AsyncSession) -> Optional[Contact]:
+    result = await db.execute(select(Contact).filter(Contact.id == contact_id))
+    db_contact = result.scalar_one_or_none()
     if db_contact:
         db_contact.name = contact.name
         db_contact.surname = contact.surname
         db_contact.email = contact.email
         db_contact.phone = contact.phone
         db_contact.birthday = contact.birthday
-        db.commit()
-        db.refresh(db_contact)
+        await db.commit()
+        await db.refresh(db_contact)
     return db_contact
 
-
-async def delete_contact(contact_id: int, db: Session) -> Contact | None:
-    db_contact = db.query(Contact).filter(Contact.id == contact_id).first()
+async def delete_contact(contact_id: int, db: AsyncSession) -> Optional[Contact]:
+    result = await db.execute(select(Contact).filter(Contact.id == contact_id))
+    db_contact = result.scalar_one_or_none()
     if db_contact:
-        db.delete(db_contact)
-        db.commit()
+        await db.delete(db_contact)
+        await db.commit()
     return db_contact
-        
-        
-async def get_upcoming_birthdays(db: Session) -> List[Contact]:
+
+async def get_upcoming_birthdays(db: AsyncSession) -> List[Contact]:
     today = date.today()
     end_date = today + timedelta(days=7)
-
-    contacts = db.query(Contact).filter(
+    
+    query = select(Contact).filter(
         or_(
             and_(
                 extract('month', Contact.birthday) == today.month,
@@ -73,6 +73,7 @@ async def get_upcoming_birthdays(db: Session) -> List[Contact]:
                 extract('day', Contact.birthday) <= end_date.day
             )
         )
-    ).all()
-
-    return contacts
+    )
+    
+    result = await db.execute(query)
+    return result.scalars().all()

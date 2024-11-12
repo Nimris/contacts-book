@@ -1,7 +1,6 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, Field
-from pydantic.class_validators import ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ContactBase(BaseModel):
